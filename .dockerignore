@@ -1,0 +1,102 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info
+.eggs
+*.egg
+
+# Virtual environments
+.venv
+venv
+env
+ENV
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache
+.coverage
+htmlcov
+.tox
+.nox
+
+# Build
+build
+dist
+*.manifest
+*.spec
+
+# Logs (keep structure)
+logs/*.log
+
+# Cache directories
+.cache/*
+!.cache/.gitkeep
+
+# Model cache (will be mounted as volume)
+.sentence_transformers
+.huggingface
+
+# Database (will be mounted as volume)
+lancedb_data/*
+!lancedb_data/.gitkeep
+
+# Environment files (use .env.example)
+.env
+.env.local
+.env.*.local
+
+# Documentation build
+docs/_build
+site
+
+# Jupyter
+.ipynb_checkpoints
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Large data files
+*.pdf
+*.docx
+*.doc
+*.pptx
+data/raw/*
+!data/raw/.gitkeep
+!data/raw/*.md
+data/processed/*
+!data/processed/.gitkeep
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.docker
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# README and docs (not needed in container)
+*.md
+!README.md
+!configs/*.md
+LICENSE

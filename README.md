@@ -1,104 +1,279 @@
-# Chatbot BKSI - RAG Chatbot cho Trường Đại Học
+# 🎓 Chatbot BKSI
 
-Chatbot RAG (Retrieval-Augmented Generation) phục vụ truy xuất thông tin về quy chế, học phí, đăng ký môn học, chương trình đào tạo của Trường Đại Học Bách Khoa - ĐHQGHCM.
+RAG-based Q&A Chatbot cho sinh viên Trường Đại Học Bách Khoa - ĐHQG-HCM.
 
-## Tính năng
+## ✨ Features
 
-- **Truy xuất thông tin thông minh**: Sử dụng RAG để tìm kiếm và trả lời dựa trên tài liệu trường học
-- **Giao diện thân thiện**: Hỗ trợ cả Gradio (web đơn giản) và Streamlit (dashboard)
-- **Embedding tiếng Việt**: Sử dụng model embedding chuyên cho tiếng Việt
-- **Miễn phí**: Sử dụng các công nghệ và API miễn phí
+- 📄 **Document Processing**: Parse PDF, DOCX, PPTX với Docling
+- 🇻🇳 **Vietnamese Embeddings**: Tối ưu cho tiếng Việt với `dangvantuan/vietnamese-document-embedding`
+- 🗄️ **LanceDB Vector Store**: Serverless, cross-platform vector database
+- ⚡ **Response Caching**: Tăng tốc các truy vấn lặp lại
+- 💬 **Conversation Memory**: Chat theo ngữ cảnh
+- 🎯 **Reranking**: Cải thiện độ chính xác với CrossEncoder (BGE-Reranker multilingual)
+- 📡 **Document Management API**: Upload/delete/reindex documents
+- 🖥️ **Multiple UI Options**: Gradio + Streamlit
 
-## Công nghệ sử dụng
+## 🛠️ Tech Stack
 
-- **Langchain**: Framework cho LLM applications
-- **ChromaDB**: Vector database cho lưu trữ embeddings
-- **OpenRouter API**: API cho model GPT-OSS 120B (miễn phí)
-- **Sentence Transformers**: Model embedding tiếng Việt (keepitreal/vietnamese-sbert)
-- **Gradio & Streamlit**: Giao diện người dùng
-- **Python-dotenv**: Quản lý biến môi trường
+| Component       | Technology                                |
+| --------------- | ----------------------------------------- |
+| Package Manager | **uv**                                    |
+| Vector Database | **LanceDB** (serverless, cross-platform)  |
+| LLM Framework   | **LangChain**                             |
+| LLM Provider    | **OpenRouter** (via ChatOpenAI)           |
+| Document Parser | **Docling** (PDF, DOCX, PPTX)             |
+| Embeddings      | **sentence-transformers**                 |
+| Reranking       | **CrossEncoder** (ms-marco-MiniLM-L-6-v2) |
+| Caching         | **LangChain SQLiteCache**                 |
+| Backend API     | **FastAPI**                               |
+| UI              | **Gradio** + **Streamlit**                |
 
-## Cài đặt
-
-1. **Clone repository** (nếu có) hoặc tạo thư mục dự án
-
-2. **Cài đặt dependencies**:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Cấu hình biến môi trường**:
-
-   - Sao chép `.env` và điền API key từ [OpenRouter](https://openrouter.ai/)
-   - API key miễn phí, đăng ký tài khoản để lấy
-
-4. **Chuẩn bị dữ liệu**:
-
-   - Đặt các file PDF/DOCX/Markdown về quy chế, học phí, v.v. vào thư mục `data/raw/`
-
-5. **Khởi tạo database**:
-   ```bash
-   python scripts/setup_db.py
-   ```
-
-## Sử dụng
-
-### Chạy Gradio App (Đơn giản)
-
-```bash
-python ui/gradio_app.py
-```
-
-### Chạy Streamlit App (Nâng cao)
-
-```bash
-streamlit run ui/streamlit_app.py
-```
-
-## Cấu trúc dự án
+## 📁 Project Structure
 
 ```
 Chatbot_BKSI/
-├── .env                    # Biến môi trường
-├── README.md               # Tài liệu này
-├── requirements.txt        # Dependencies
-├── data/                   # Dữ liệu
-│   ├── raw/                # Tài liệu gốc
-│   └── processed/          # Dữ liệu đã xử lý
-├── src/                    # Code chính
-│   ├── config.py           # Cấu hình
-│   ├── data_ingestion.py   # Xử lý dữ liệu
-│   ├── embedding.py        # Embedding model
-│   ├── vector_store.py     # ChromaDB
-│   ├── llm.py              # OpenRouter LLM
-│   ├── rag_chain.py        # RAG pipeline
-│   └── utils.py            # Utilities
-├── ui/                     # Giao diện
-│   ├── gradio_app.py       # Gradio interface
-│   └── streamlit_app.py    # Streamlit interface
-├── scripts/                # Scripts hỗ trợ
-│   ├── setup_db.py         # Khởi tạo DB
-│   └── run_ingestion.py    # Chạy ingestion
-└── tests/                  # Unit tests
-    └── test_rag.py
+├── api/                    # FastAPI backend
+│   ├── main.py            # FastAPI app
+│   ├── dependencies.py    # Dependency injection
+│   └── routes/            # API routes
+│       ├── chat.py        # Chat endpoints
+│       └── documents.py   # Document management
+├── configs/               # Configuration files
+│   ├── settings.yaml      # App settings
+│   └── prompts.yaml       # Prompt templates
+├── data/                  # Data directory
+│   ├── raw/              # Original documents (PDF, DOCX)
+│   └── processed/        # Processed markdown files
+├── scripts/              # CLI scripts
+│   └── cli.py           # Typer CLI
+├── src/                  # Source code
+│   ├── cache/           # Response caching
+│   ├── config.py        # Settings management
+│   ├── document_processing/  # Docling parser, chunker
+│   ├── embeddings/      # sentence-transformers
+│   ├── models/          # Pydantic models
+│   ├── rag/             # RAG chain, retriever, reranker, memory
+│   ├── utils/           # Logging, helpers
+│   └── vectorstore/     # LanceDB vector store
+├── tests/               # Pytest tests
+├── ui/                  # User interfaces
+│   ├── gradio_app.py   # Gradio UI
+│   └── streamlit_app.py # Streamlit UI
+├── .env.example         # Environment template
+├── pyproject.toml       # uv project config
+└── README.md
 ```
 
-## API Keys
+## 🚀 Installation
 
-- **OpenRouter**: Đăng ký tại https://openrouter.ai/ để lấy API key miễn phí
-- Model sử dụng: `gpt-oss-120b` (miễn phí)
+### Prerequisites
 
-## Phát triển thêm
+- Python 3.10+
+- [uv](https://github.com/astral-sh/uv) package manager
+- Docker & Docker Compose (optional, for containerized deployment)
 
-- Thêm nhiều tài liệu: Đặt file vào `data/raw/` và chạy lại `setup_db.py`
-- Tối ưu hóa: Điều chỉnh chunk_size, top_k trong `config.py`
-- Logging: Xem logs trong console hoặc file log
+### Setup (Local)
 
-## License
+```bash
+# Clone repository
+git clone <repository-url>
+cd Chatbot_BKSI
 
-Miễn phí sử dụng cho mục đích giáo dục.
+# Install dependencies with uv
+uv sync
 
-## Liên hệ
+# Copy environment template
+cp .env.example .env
 
-Nếu có vấn đề, kiểm tra logs hoặc tạo issue trên repository.
+# Edit .env with your API key
+# OPENROUTER_API_KEY=your_key_here
+```
+
+### Setup (Docker)
+
+```bash
+# Clone repository
+git clone <repository-url>
+cd Chatbot_BKSI
+
+# Copy environment template
+cp .env.example .env
+# Edit .env with your API key
+
+# Build and run all services
+docker-compose up -d
+
+# Or run specific service
+docker-compose up api -d      # FastAPI only
+docker-compose up gradio -d   # Gradio only
+docker-compose up streamlit -d # Streamlit only
+
+# Ingest documents (run once)
+docker-compose --profile tools run ingest
+
+# View logs
+docker-compose logs -f api
+
+# Stop all services
+docker-compose down
+```
+
+#### GPU Support (NVIDIA)
+
+```bash
+# Requires NVIDIA Container Toolkit
+docker-compose -f docker-compose.gpu.yml up -d
+```
+
+## 📖 Usage
+
+### 1. Ingest Documents
+
+Đặt tài liệu (PDF, DOCX, MD) vào thư mục `data/raw/`, sau đó:
+
+```bash
+# Local
+uv run bksi ingest
+
+# Docker
+docker-compose --profile tools run ingest
+
+# Rebuild index from scratch
+uv run bksi ingest --rebuild
+```
+
+### 2. Run Gradio UI
+
+```bash
+uv run bksi gradio
+
+# Or with custom options
+uv run bksi gradio --host 0.0.0.0 --port 7860 --share
+```
+
+### 3. Run Streamlit UI
+
+```bash
+uv run bksi streamlit
+```
+
+### 4. Run FastAPI Server
+
+```bash
+uv run bksi api
+
+# Or with uvicorn directly
+uv run uvicorn api.main:app --reload
+```
+
+### 5. Interactive Chat (Terminal)
+
+```bash
+uv run bksi chat
+```
+
+### 6. Clear Cache
+
+```bash
+uv run bksi clear-cache
+```
+
+## 🔧 Configuration
+
+### Environment Variables (`.env`)
+
+```bash
+# Required
+OPENROUTER_API_KEY=your_openrouter_api_key
+
+# Optional
+LLM_MODEL=openai/gpt-oss-120b:free
+EMBEDDING_MODEL=dangvantuan/vietnamese-document-embedding
+EMBEDDING_DEVICE=cpu  # or cuda
+```
+
+### Settings (`configs/settings.yaml`)
+
+```yaml
+llm:
+  model: openai/gpt-oss-120b:free
+  temperature: 0.7
+  max_tokens: 2048
+
+embeddings:
+  model: dangvantuan/vietnamese-document-embedding
+  device: cuda # or cpu
+
+vectorstore:
+  persist_dir: ./lancedb_data
+  table_name: chunks
+
+rag:
+  top_k: 5
+  chunk_size: 512
+  chunk_overlap: 50
+  rerank_enabled: true
+  rerank_model: BAAI/bge-reranker-v2-m3
+  rerank_top_n: 3
+
+cache:
+  enabled: true
+  directory: ./.cache
+
+memory:
+  max_messages: 20
+```
+
+## 📡 API Endpoints
+
+### Chat
+
+- `POST /chat/` - Chat với RAG
+- `POST /chat/search` - Semantic search
+- `POST /chat/clear-memory` - Xóa memory session
+- `POST /chat/clear-cache` - Xóa response cache
+
+### Documents
+
+- `POST /documents/upload` - Upload document
+- `GET /documents/` - List documents
+- `DELETE /documents/{document_id}` - Delete document
+- `GET /documents/stats` - Get statistics
+- `POST /documents/reindex` - Rebuild vector index
+
+### Health
+
+- `GET /health` - Health check
+- `GET /` - API info
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+uv run pytest
+
+# Run with coverage
+uv run pytest --cov=src
+
+# Run specific test file
+uv run pytest tests/test_components.py -v
+```
+
+## 📚 Documentation
+
+API documentation available at:
+
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details

@@ -1,0 +1,93 @@
+# Application Settings
+app:
+  name: "Chatbot BKSI"
+  version: "0.1.0"
+  debug: false
+
+# LLM Configuration
+llm:
+  provider: "openrouter"
+  model: "kwaipilot/kat-coder-pro:free"
+  temperature: 0.7
+  max_tokens: 2048
+  timeout: 60
+
+# Embedding Configuration
+embedding:
+  model: "dangvantuan/vietnamese-document-embedding"
+  device: "cuda"  # or "cpu"
+  batch_size: 32
+  normalize: true
+
+# LanceDB Vector Store Configuration
+vectorstore:
+  persist_dir: "./lancedb_data"
+  table_name: "chunks"
+
+# RAG Configuration
+rag:
+  top_k: 5
+  chunk_size: 512
+  chunk_overlap: 50
+  
+  # Reranking (CrossEncoder for Vietnamese)
+  rerank_enabled: true
+  rerank_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+  rerank_top_n: 3
+
+# Caching Configuration (LangChain SQLiteCache)
+cache:
+  enabled: true
+  directory: "./.cache"
+
+# Conversation Memory
+memory:
+  enabled: true
+  max_messages: 20
+  window_size: 10
+
+# Document Processing
+documents:
+  raw_dir: "./data/raw"
+  processed_dir: "./data/processed"
+  supported_formats:
+    - ".pdf"
+    - ".docx"
+    - ".doc"
+    - ".pptx"
+    - ".md"
+    - ".txt"
+
+# Chunking Configuration
+chunking:
+  strategy: "recursive"  # or "semantic"
+  separators:
+    - "\n\n"
+    - "\n"
+    - ". "
+    - " "
+
+# API Configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  cors_origins:
+    - "*"
+  max_upload_size_mb: 50
+
+# UI Configuration
+ui:
+  gradio:
+    port: 7860
+    share: false
+    theme: "soft"
+  streamlit:
+    port: 8501
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+  file: "./logs/app.log"
+  rotation: "10 MB"
+  retention: "7 days"

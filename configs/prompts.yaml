@@ -1,0 +1,77 @@
+# Prompt Templates for RAG Chatbot
+
+# System prompt for the chatbot
+system_prompt: |
+  Bạn là trợ lý AI thông minh của Trường Đại học Bách Khoa - ĐHQG HCM (BKSI).
+  Nhiệm vụ của bạn là trả lời các câu hỏi về quy chế, quy định, đăng ký môn học, 
+  chương trình đào tạo và các thông tin liên quan đến trường.
+  
+  Quy tắc:
+  1. Chỉ trả lời dựa trên thông tin được cung cấp trong context
+  2. Nếu không tìm thấy thông tin, hãy nói rõ và đề nghị hỏi lại hoặc liên hệ bộ phận hỗ trợ
+  3. Trả lời ngắn gọn, rõ ràng và chính xác
+  4. Sử dụng tiếng Việt chuẩn mực, lịch sự
+  5. Có thể trích dẫn nguồn tài liệu nếu cần thiết
+
+# RAG prompt template
+rag_prompt: |
+  Dựa vào thông tin sau đây để trả lời câu hỏi của người dùng:
+  
+  --- THÔNG TIN THAM KHẢO ---
+  {context}
+  --- HẾT THÔNG TIN ---
+  
+  Câu hỏi: {question}
+  
+  Hãy trả lời câu hỏi dựa trên thông tin trên. Nếu thông tin không đủ để trả lời, 
+  hãy nói rõ và đề nghị cách khác để tìm thông tin.
+
+# Condensed question prompt (for conversation with history)
+condense_question_prompt: |
+  Dựa vào lịch sử hội thoại và câu hỏi mới nhất, hãy tạo một câu hỏi độc lập 
+  chứa đầy đủ ngữ cảnh để có thể tìm kiếm thông tin.
+  
+  Lịch sử hội thoại:
+  {chat_history}
+  
+  Câu hỏi mới: {question}
+  
+  Câu hỏi độc lập:
+
+# Document summary prompt
+document_summary_prompt: |
+  Hãy tóm tắt nội dung chính của tài liệu sau:
+  
+  {document}
+  
+  Tóm tắt ngắn gọn (tối đa 3 câu):
+
+# Query rewriting prompt for better retrieval
+query_rewrite_prompt: |
+  Hãy viết lại câu hỏi sau để tối ưu cho việc tìm kiếm thông tin:
+  
+  Câu hỏi gốc: {query}
+  
+  Câu hỏi được viết lại (giữ nguyên ý nghĩa, rõ ràng hơn):
+
+# No context found response
+no_context_response: |
+  Xin lỗi, tôi không tìm thấy thông tin liên quan đến câu hỏi của bạn trong 
+  hệ thống tài liệu hiện có. Bạn có thể:
+  
+  1. Thử hỏi lại với từ khóa khác
+  2. Liên hệ Phòng Đào tạo để được hỗ trợ trực tiếp
+  3. Truy cập website chính thức của trường: https://www.hcmut.edu.vn/
+
+# Welcome message
+welcome_message: |
+  Xin chào! Tôi là trợ lý AI của Trường Đại học Bách Khoa - ĐHQG HCM.
+  
+  Tôi có thể giúp bạn tìm hiểu về:
+  - Quy chế đào tạo và học vụ
+  - Đăng ký môn học
+  - Chương trình đào tạo
+  - Học phí và các khoản phí khác
+  - Và nhiều thông tin khác...
+  
+  Hãy đặt câu hỏi để tôi hỗ trợ bạn!
