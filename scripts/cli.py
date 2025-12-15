@@ -3,7 +3,13 @@
 from pathlib import Path
 from typing import Optional
 
+import sys
 import typer
+# Force UTF-8 encoding for Windows terminals to prevent Rich UnicodeEncodeError
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 

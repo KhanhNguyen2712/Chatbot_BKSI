@@ -1,0 +1,92 @@
+/* Main App Background */
+.stApp {
+    background-color: #131314; /* Gemini Dark */
+}
+
+/* Main Container: Wide View */
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 8rem; /* Space for chat input */
+    max-width: 1600px; 
+    margin: 0 auto;
+}
+
+/* Text Color */
+p, h1, h2, h3, li, span, div {
+    color: #E3E3E3;
+}
+
+/* Gradient Text for Welcome */
+.welcome-text {
+    background: linear-gradient(to right, #4285F4, #9B72CB, #D96570);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.welcome-subtext {
+    font-size: 1.5rem;
+    color: #9AA0A6;
+    font-weight: 500;
+    margin-bottom: 2rem;
+}
+
+/* Chat message styling */
+.stChatMessage {
+    background-color: transparent;
+}
+
+[data-testid="stChatMessage"] {
+    padding: 1rem 0;
+}
+
+/* Code block styling */
+code {
+    color: #E0E0E0 !important;
+    background-color: #1E1F20 !important;
+    border-radius: 4px;
+}
+
+/* Sidebar styling */
+[data-testid="stSidebar"] {
+    background-color: #1E1F20;
+}
+
+/* Input box styling - Default State (Bottom) */
+.stChatInputContainer {
+    max-width: 700px !important;
+    margin: 0 auto;
+    padding-bottom: 2rem;
+}
+
+/* Expander styling (Sources) */
+.streamlit-expanderHeader {
+    background-color: transparent;
+    color: #9AA0A6;
+    font-size: 0.85rem;
+    border: 1px solid #444746;
+    border-radius: 8px;
+}
+
+[data-testid="stExpander"] {
+    border: none;
+    box-shadow: none;
+    background-color: transparent;
+}
+
+/* Suggestion Chips */
+.stAlert {
+    background-color: #1E1F20;
+    border: 1px solid #444746;
+    border-radius: 12px;
+    color: #E3E3E3;
+    padding: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.stAlert:hover {
+    background-color: #2D2F30;
+}

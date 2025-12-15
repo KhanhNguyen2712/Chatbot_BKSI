@@ -44,13 +44,16 @@ class RAGChain:
         )
         self.memory = ConversationMemory() if self.use_memory else None
 
-        # Initialize LLM with OpenRouter
+        # Initialize LLM
+        api_key = self.settings.groq_api_key
+        base_url = self.settings.groq_base_url
+        
         self.llm = ChatOpenAI(
             model=self.settings.llm_model,
             temperature=self.settings.llm_temperature,
             max_tokens=self.settings.llm_max_tokens,
-            openai_api_key=self.settings.openrouter_api_key,
-            openai_api_base=self.settings.openrouter_base_url,
+            openai_api_key=api_key,
+            openai_api_base=base_url,
         )
 
         # Load prompts

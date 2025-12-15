@@ -17,15 +17,16 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
-
-    # OpenRouter API Configuration
-    openrouter_api_key: str = Field(default="", alias="OPENROUTER_API_KEY")
-    openrouter_base_url: str = Field(
-        default="https://openrouter.ai/api/v1", alias="OPENROUTER_BASE_URL"
+    
+    # Groq API Configuration
+    groq_api_key: str = Field(default="", alias="GROQ_API_KEY")
+    groq_base_url: str = Field(
+        default="https://api.groq.com/openai/v1", alias="GROQ_BASE_URL"
     )
-
+    
     # LLM Configuration
-    llm_model: str = Field(default="openai/gpt-oss-120b:free", alias="LLM_MODEL")
+    llm_provider: str = Field(default="groq", alias="LLM_PROVIDER")
+    llm_model: str = Field(default="openai/gpt-oss-120b", alias="LLM_MODEL")
     llm_temperature: float = Field(default=0.7, alias="LLM_TEMPERATURE")
     llm_max_tokens: int = Field(default=2048, alias="LLM_MAX_TOKENS")
 

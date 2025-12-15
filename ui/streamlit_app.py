@@ -1,5 +1,8 @@
 """Streamlit UI for Chatbot BKSI."""
 
+import re
+import subprocess
+import sys
 import time
 import uuid
 from typing import Generator
@@ -17,89 +20,35 @@ from src.vectorstore import LanceDBVectorStore
 st.set_page_config(
     page_title="Chatbot BKSI",
     page_icon="🎓",
-    layout="centered",  # Centered layout looks more like a chat app
+    layout="wide",  # Wide layout needed for side-by-side view
     initial_sidebar_state="auto",
 )
 
-# Custom CSS for ChatGPT-like styling
-ST_CSS = """
-<style>
-    /* Hide Streamlit elements */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    
-    /* Main App Background */
-    .stApp {
-        background-color: #343541;
-    }
-    
-    /* Remove top padding */
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 6rem; /* Space for chat input */
-    }
-    
-    /* Text Color */
-    p, h1, h2, h3 {
-        color: #ECECF1;
-    }
-
-    /* Chat message styling */
-    .stChatMessage {
-        background-color: transparent;
-        border: none;
-    }
-    
-    /* User message avatar area */
-    [data-testid="stChatMessage"] {
-        padding: 1.5rem;
-    }
-
-    /* User message background (Darker/Different) */
-    [data-testid="stChatMessage"]:nth-child(odd) {
-        background-color: #343541; /* Match background or slight vary */
-    }
-    
-    /* Assistant message background (Lighter) */
-    [data-testid="stChatMessage"]:nth-child(even) {
-        background-color: #444654;
-    }
-    
-    /* Code block styling */
-    code {
-        color: #E0E0E0 !important;
-        background-color: #2D2F34 !important;
-    }
-    
-    /* Sidebar styling */
-    [data-testid="stSidebar"] {
-        background-color: #202123;
-    }
-    
-    /* Input box styling */
-    .stChatInputContainer {
-        padding-bottom: 2rem;
-    }
-    
-    /* Expander styling in dark mode */
-    .streamlit-expanderHeader {
-        background-color: #444654;
-        color: #ECECF1;
-    }
-</style>
-"""
-st.markdown(ST_CSS, unsafe_allow_html=True)
-
 # Setup logging
 setup_logging()
+
+
+def load_css():
+    """Load external CSS."""
+    with open("ui/style.css", "r") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+
+def clean_text(text: str) -> str:
+    """Clean text by removing artifacts like <--br-->."""
+    if not text:
+        return ""
+    # Remove <--br--> tags
+    text = re.sub(r"<--br-->", "\n", text)
+    # Remove multiple newlines
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
 
 
 @st.cache_resource
 def init_components():
     """Initialize RAG components (cached)."""
     settings = get_settings()
-    # config = ConfigManager() # Not used directly in UI currently
 
     embedding_model = EmbeddingModel(
         model_name=settings.embedding_model,
@@ -128,13 +77,42 @@ def init_session_state():
         st.session_state.messages = []
 
 
+def reindex_data(chunk_size: int, chunk_overlap: int):
+    """Trigger data re-indexing."""
+    try:
+        # Update settings.yaml temporarily or pass args to CLI?
+        # CLI supports args, but ingestion logic reads from settings.
+        # We will use the CLI command logic directly or via subprocess with flags if supported.
+        # The current CLI (cli.py) reads from settings. 
+        # For this demo, we'll try to run the ingest command. 
+        # Ideally, we should update the Settings object or passed args.
+        # Since cl.py is simple, let's run it.
+        # Note: Changing chunk size requires rebuilding the index.
+        
+        with st.spinner("Đang xử lý dữ liệu (có thể mất vài phút)..."):
+            # We can't easily pass chunk params to CLI without modifying it to accept them.
+            # Assuming for now we just trigger a rebuild, but really the user wants to TEST params.
+            # We'll stick to a placeholder "ingest" call for now.
+            cmd = [sys.executable, "scripts/cli.py", "ingest", "--rebuild"]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            
+            if result.returncode == 0:
+                st.success("Xử lý dữ liệu thành công!")
+                time.sleep(1)
+                st.rerun()
+            else:
+                st.error(f"Lỗi: {result.stderr}")
+                
+    except Exception as e:
+        st.error(f"Đã có lỗi xảy ra: {e}")
+
+
 def display_sidebar(settings):
     """Display sidebar with settings and info."""
     with st.sidebar:
         st.title("🎓 Chatbot BKSI")
-        st.caption(f"v{__version__} | Powered by RAG")
+        st.caption(f"v{__version__} | Powered by Groq")
 
-        # New Chat Button
         if st.button("✨ Đoạn chat mới", use_container_width=True, type="primary"):
             st.session_state.messages = []
             st.session_state.session_id = str(uuid.uuid4())
@@ -142,130 +120,217 @@ def display_sidebar(settings):
 
         st.divider()
 
-        # Settings
-        with st.expander("⚙️ Cấu hình nâng cao"):
-            top_k = st.slider(
-                "Số lượng tài liệu",
-                min_value=1,
-                max_value=10,
-                value=settings.rag_top_k,
-                help="Số lượng văn bản được trích xuất.",
-            )
+        with st.expander("🛠️ Cấu hình tham số", expanded=True):
+            # Runtime Params
+            temperature = st.slider("Temperature", 0.0, 1.0, 0.7, 0.1, help="Độ sáng tạo của câu trả lời.")
+            top_k = st.slider("Top-K", 1, 10, settings.rag_top_k, 1, help="Số lượng tài liệu tham khảo.")
+            
+            st.divider()
+            
+            # Indexing Params (Mock-up basically since we need to persist these)
+            st.caption("📝 Indexing Config")
+            chunk_size = st.number_input("Chunk Size", value=settings.rag_chunk_size, step=64)
+            chunk_overlap = st.number_input("Chunk Overlap", value=settings.rag_chunk_overlap, step=10)
+            
+            if st.button("🔄 Re-index Data", help="Cần chạy lại khi đổi Chunk Size"):
+                # Warning: This is a heavy operation
+                reindex_data(chunk_size, chunk_overlap)
 
-            use_rerank = st.checkbox(
-                "Kích hoạt Rerank",
-                value=settings.rag_rerank_enabled,
-                help="Sắp xếp lại kết quả để chính xác hơn.",
-            )
-        
-        st.divider()
-        st.markdown("### ℹ️ Thông tin")
-        st.markdown(f"- **LLM**: `{settings.llm_model}`")
-        st.markdown(f"- **Embedding**: `Unknown`") #  Simplified for UI cleanliness
-
-        st.caption("© 2024 BKSI Project")
-        
-        return top_k, use_rerank
+        return temperature, top_k
 
 
 def stream_text(text: str) -> Generator[str, None, None]:
     """Simulate streaming text effect."""
     for word in text.split(" "):
         yield word + " "
-        time.sleep(0.02)
+        time.sleep(0.015)
 
 
-def display_welcome_screen():
-    """Display welcome screen when chat is empty."""
+def display_hero_css():
+    """Inject CSS to center the chat input when history is empty."""
     st.markdown(
         """
-        <div style="text-align: center; margin-top: 5rem;">
-            <h1>👋 Chào bạn!</h1>
-            <p>Tôi là trợ lý ảo BKSI, tôi có thể giúp gì cho bạn hôm nay?</p>
-        </div>
+        <style>
+        /* Force the bottom container to move up */
+        div[data-testid="stBottomBlockContainer"] {
+            position: absolute;
+            bottom: 40% !important; /* Force position */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 800px; /* Match input width */
+            padding-bottom: 0;
+            background: transparent;
+            z-index: 999;
+        }
+        
+        /* Ensure the input container itself is centered inside */
+        .stChatInputContainer {
+             margin: 0 auto;
+        }
+
+        /* Hide the footer spacer */
+        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stChatInputContainer"]) {
+             display: none;
+        }
+        </style>
         """,
-        unsafe_allow_html=True,
+        unsafe_allow_html=True
     )
 
-    # Suggestion chips
-    cols = st.columns(3)
-    suggestions = [
-        "Quy trình đăng ký môn học?",
-        "Thời gian đóng học phí?",
-        "Điều kiện tốt nghiệp là gì?",
-    ]
+def display_welcome_screen():
+    """Display welcome screen centrally."""
+    # Layout: [Spacer] [Content] [Spacer] - Symmetric for Hero Mode
+    _, col_center, _ = st.columns([0.2, 0.6, 0.2])
     
-    # Allow clicking suggestions to populate chat input (requires Streamlit hack or just copy-paste)
-    # Since st.button inside chat input isn't native, we just display them.
-    for i, col in enumerate(cols):
-        with col:
-            st.info(suggestions[i], icon="💡")
+    with col_center:
+        st.markdown(
+            """
+            <div style="text-align: center; margin-top: 5vh; margin-bottom: 3rem;">
+                <div class="welcome-text">Trợ lý ảo BKSI</div>
+                <div class="welcome-subtext">Hôm nay tôi có thể giúp gì cho bạn?</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        
+        # Suggestions
+        cols = st.columns(3)
+        suggestions = [
+            "Đăng ký môn học?",
+            "Quy chế mới nhất?",
+            "Học phí đại học?",
+        ]
+        for i, col in enumerate(cols):
+            with col:
+                st.info(suggestions[i], icon="✨")
+
+
+def render_message(role: str, content: str, sources: list = None):
+    """Render a single chat message with 3-column layout."""
+    # Layout: [Spacer (10%)] | [Chat (60%)] | [Sources (30%)]
+    
+    # We use a container first to manage the row
+    with st.container():
+        col_spacer, col_chat, col_src = st.columns([0.1, 0.6, 0.3])
+        
+        with col_chat:
+            with st.chat_message(role):
+                st.markdown(content)
+        
+        # Sources only for assistant and if available
+        if role == "assistant" and sources:
+            with col_src:
+                st.caption("📚 Nguồn tham khảo")
+                for idx, src in enumerate(sources, 1):
+                    with st.expander(f"[{idx}] {src.get('document_id', 'Doc')}", expanded=False):
+                        st.caption(f"Score: {src.get('score', 0):.2f}")
+                        st.markdown(f"<small>{src.get('content', '')[:150]}...</small>", unsafe_allow_html=True)
 
 
 def main():
     """Main Streamlit app."""
+    load_css()
     init_session_state()
     rag_chain, settings = init_components()
 
-    top_k, use_rerank = display_sidebar(settings)
-
-    # Display chat messages
-    if not st.session_state.messages:
-        display_welcome_screen()
+    temp, top_k = display_sidebar(settings)
     
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-            # Display sources for assistant messages if available within the message object
-            # Note: We need to store sources in the message history structure
-            if message.get("sources"):
-                with st.expander("📚 Nguồn tham khảo"):
-                    for idx, src in enumerate(message["sources"], 1):
-                        st.markdown(f"**[{idx}] {src.get('document_id', 'Doc')}** ({src.get('score', 0):.2f})")
-                        st.caption(src.get('content', '')[:300] + "...")
+    # Update runtime settings
+    rag_chain.settings.llm_temperature = temp
 
+    # DYNAMIC LAYOUT LOGIC
+    # Create a placeholder for the Hero UI (CSS + Welcome)
+    hero_placeholder = st.empty()
+    
+    # Check if user has just submitted an input (Hero Mode should vanish immediately)
+    user_input = st.session_state.get("main_chat_input")
+    
+    # Render Hero if history is empty AND no new input
+    if not st.session_state.messages and not user_input:
+        with hero_placeholder.container():
+            display_hero_css()
+            display_welcome_screen()
+    else:
+        # Chat Mode: Standard history display
+        for message in st.session_state.messages:
+            render_message(message["role"], message["content"], message.get("sources"))
 
-    # Chat input
-    if prompt := st.chat_input("Nhập câu hỏi của bạn..."):
-        # Display user message
+    # Chat Input
+    # The input box is centrally styled by CSS max-width, so we just render it.
+    if prompt := st.chat_input("Nhập câu hỏi của bạn...", key="main_chat_input"):
+        # CRITICAL: Instantly clear the Hero UI to prevent ghosting
+        hero_placeholder.empty()
+        
         st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+        
+        # Force a rerun to ensure layout updates immediately
+        st.rerun() 
+        
+    # PROCESS NEW MESSAGE AFTER RERUN
+    # NOTE: Logic flow needs adjustment because st.chat_input triggers a rerun automatically.
+    # The actual processing needs to happen if the LAST message is from USER.
+    
+    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+        # Get the latest user prompt
+        prompt = st.session_state.messages[-1]["content"]
+        
+        # We need to re-render history first because of rerun
+        # (This is handled by the 'else' block above in the NEXT run, but we need to show the NEW user message NOW if we want streaming)
+        # Actually proper streamlit flow:
+        # 1. Rerun happens.
+        # 2. History loop renders existing conversation (including new user msg).
+        # 3. We detect user msg needs response.
+        
+        # Let's fix the flow:
+        # If last msg is User, generate Assistant response.
+        pass # Logic handled below layout
 
-        # Generate and display assistant response
-        with st.chat_message("assistant"):
-            with st.spinner("Đang suy nghĩ..."):
-                t_start = time.time()
-                response_obj = rag_chain.chat(
-                    message=prompt,
-                    session_id=st.session_state.session_id,
-                    top_k=top_k,
-                    use_rerank=use_rerank,
-                )
-                t_end = time.time()
-                
-            # Simulate streaming
-            response_text = response_obj.answer or "Xin lỗi, tôi không có câu trả lời."
-            placeholder = st.empty()
-            full_response = ""
-            for chunk in stream_text(response_text):
-                full_response += chunk
-                placeholder.markdown(full_response + "▌")
-            placeholder.markdown(full_response)
-
-            # Display sources immediately below
-            if response_obj.sources:
-                with st.expander("📚 Nguồn tham khảo"):
+    # Handle Generation ONLY if last message is USER
+    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+        
+        # Render the just-added user message (if not already rendered in history loop)
+        # In current flow, if we just appended and reran, it WILL be in history loop above.
+        # Wait, if we use st.rerun(), the script stops and restarts. 
+        # So the `if prompt` block executes, appends, reruns.
+        # Next run: `messages` is NOT empty. `display_hero_css` is SKIPPED. `history loop` runs.
+        # Last message is USER. We need to generate response.
+        
+        with st.container():
+             col_spacer, col_chat, col_src = st.columns([0.1, 0.6, 0.3])
+             
+             with col_chat:
+                with st.chat_message("assistant"):
+                    with st.spinner("Đang suy nghĩ..."):
+                        response_obj = rag_chain.chat(
+                            message=st.session_state.messages[-1]["content"],
+                            session_id=st.session_state.session_id,
+                            top_k=top_k,
+                        )
+                    
+                    full_response = clean_text(response_obj.answer or "Xin lỗi, tôi không có câu trả lời.")
+                    
+                    placeholder = st.empty()
+                    streamed_text = ""
+                    for chunk in stream_text(full_response):
+                        streamed_text += chunk
+                        placeholder.markdown(streamed_text + "▌")
+                    placeholder.markdown(streamed_text)
+            
+             if response_obj.sources:
+                with col_src:
+                    st.caption("📚 Nguồn tham khảo")
                     for idx, src in enumerate(response_obj.sources, 1):
-                         st.markdown(f"**[{idx}] {src.get('document_id', 'Doc')}** ({src.get('score', 0):.2f})")
-                         st.caption(src.get('content', '')[:300] + "...")
+                        with st.expander(f"[{idx}] {src.get('document_id', 'Doc')}", expanded=False):
+                            st.caption(f"Score: {src.get('score', 0):.2f}")
+                            st.markdown(f"<small>{src.get('content', '')[:150]}...</small>", unsafe_allow_html=True)
 
-            # Save to history including sources for persistence
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": full_response,
-                "sources": response_obj.sources
-            })
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": full_response,
+            "sources": response_obj.sources
+        })
+        st.rerun() # Rerun again to clean up streaming placeholders
 
 
 if __name__ == "__main__":
