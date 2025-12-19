@@ -1,8 +1,6 @@
 """RAG Chain using LangChain with OpenRouter."""
 
-import re
 import uuid
-from pathlib import Path
 from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -13,7 +11,6 @@ from loguru import logger
 from src.config import get_prompt, get_settings
 from src.models import ChatResponse, SearchResult
 from src.vectorstore import LanceDBVectorStore
-from src.document_processing import TextChunker
 
 from .memory import ConversationMemory
 from .reranker import Reranker
@@ -62,10 +59,6 @@ class RAGChain:
         # Load prompts
         self.system_prompt = get_prompt("system_prompt")
         self.rag_prompt_template = get_prompt("rag_prompt")
-        self.extract_info_prompt = get_prompt("extract_info_prompt")
-
-        # Text chunker for learning
-        self.text_chunker = TextChunker()
 
         logger.info(
             f"RAGChain initialized with model: {self.settings.llm_model}, "

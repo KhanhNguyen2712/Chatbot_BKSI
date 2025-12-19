@@ -5,8 +5,6 @@ import subprocess
 import sys
 import time
 import uuid
-
-from pathlib import Path
 from typing import Generator
 
 import streamlit as st
@@ -17,7 +15,6 @@ from src.embeddings import EmbeddingModel
 from src.rag import RAGChain
 from src.utils import setup_logging
 from src.vectorstore import LanceDBVectorStore
-from src.document_processing import DocumentParser, TextChunker
 
 # Page config
 st.set_page_config(
@@ -68,12 +65,8 @@ def init_components():
         use_rerank=settings.rag_rerank_enabled,
         use_memory=settings.memory_enabled,
     )
-    
-    # Initialize document processing
-    doc_parser = DocumentParser()
-    text_chunker = TextChunker()
 
-    return rag_chain, vector_store, doc_parser, text_chunker, settings
+    return rag_chain, settings
 
 
 def init_session_state():
@@ -131,25 +124,17 @@ def display_sidebar(settings):
             # Runtime Params
             temperature = st.slider("Temperature", 0.0, 1.0, 0.7, 0.1, help="Độ sáng tạo của câu trả lời.")
             top_k = st.slider("Top-K", 1, 10, settings.rag_top_k, 1, help="Số lượng tài liệu tham khảo.")
-        
-        st.divider()
-        
-        st.markdown("### 📝 Hướng dẫn")
-        st.markdown("""
-        **Cách sử dụng:**
-        1. Nhập câu hỏi và nhấn Enter
-        2. Xem câu trả lời kèm nguồn
-        
-        **🎓 Tự động học:**
-        Chatbot sẽ **tự động nhận biết** 
-        và lưu thông tin mới bạn cung cấp!
-        
-        **Ví dụ:**
-        - "Địa chỉ trường là 268 Lý Thường Kiệt"
-        - "Email: support@hcmut.edu.vn"
-        
-        ➡️ Bot sẽ tự động lưu và nhớ!
-        """)
+            
+            st.divider()
+            
+            # Indexing Params (Mock-up basically since we need to persist these)
+            st.caption("📝 Indexing Config")
+            chunk_size = st.number_input("Chunk Size", value=settings.rag_chunk_size, step=64)
+            chunk_overlap = st.number_input("Chunk Overlap", value=settings.rag_chunk_overlap, step=10)
+            
+            if st.button("🔄 Re-index Data", help="Cần chạy lại khi đổi Chunk Size"):
+                # Warning: This is a heavy operation
+                reindex_data(chunk_size, chunk_overlap)
 
         return temperature, top_k
 
@@ -247,15 +232,8 @@ def main():
     """Main Streamlit app."""
     load_css()
     init_session_state()
-    rag_chain, vector_store, doc_parser, text_chunker, settings = init_components()
+    rag_chain, settings = init_components()
 
-    # Tabs for different sections
-    tab1 = st.tabs(["💬 Hội thoại"])
-    
-    with tab1:
-        render_chat_tab(rag_chain, settings)
-def render_chat_tab(rag_chain, settings):
-    """Render the chat interface tab."""
     temp, top_k = display_sidebar(settings)
     
     # Update runtime settings
@@ -316,7 +294,8 @@ def render_chat_tab(rag_chain, settings):
         # Wait, if we use st.rerun(), the script stops and restarts. 
         # So the `if prompt` block executes, appends, reruns.
         # Next run: `messages` is NOT empty. `display_hero_css` is SKIPPED. `history loop` runs.
-        # Last message is USER. We need to generate response.      
+        # Last message is USER. We need to generate response.
+        
         with st.container():
              col_spacer, col_chat, col_src = st.columns([0.1, 0.6, 0.3])
              
@@ -329,7 +308,8 @@ def render_chat_tab(rag_chain, settings):
                             top_k=top_k,
                         )
                     
-                    full_response = clean_text(response_obj.answer or "Xin lỗi, tôi không có câu trả lời.")                    
+                    full_response = clean_text(response_obj.answer or "Xin lỗi, tôi không có câu trả lời.")
+                    
                     placeholder = st.empty()
                     streamed_text = ""
                     for chunk in stream_text(full_response):
