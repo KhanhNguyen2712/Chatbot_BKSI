@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 import sys
+import shutil
 import typer
 # Force UTF-8 encoding for Windows terminals to prevent Rich UnicodeEncodeError
 if sys.platform == "win32":
@@ -78,6 +79,13 @@ def ingest(
             device=settings.embedding_device,
         )
 
+        if rebuild and settings.lancedb_persist_dir and Path(settings.lancedb_persist_dir).exists():
+             progress.console.print(f"[yellow]Removing existing database at {settings.lancedb_persist_dir}...[/yellow]")
+             try:
+                 shutil.rmtree(settings.lancedb_persist_dir)
+             except Exception as e:
+                 progress.console.print(f"[red]Failed to remove directory: {e}[/red]")
+
         vector_store = LanceDBVectorStore(
             persist_dir=settings.lancedb_persist_dir,
             embedding_model=embedding_model,
@@ -140,47 +148,6 @@ def ingest(
         else:
             console.print("[yellow]No chunks to index[/yellow]")
 
-
-@app.command()
-def api(
-    host: str = typer.Option("0.0.0.0", "--host", "-h", help="Host to bind"),
-    port: int = typer.Option(8000, "--port", "-p", help="Port to bind"),
-    reload: bool = typer.Option(
-        True, "--reload/--no-reload", help="Enable auto-reload"
-    ),
-):
-    """Run FastAPI server."""
-    import uvicorn
-
-    console.print(
-        f"[bold green]Starting API server at http://{host}:{port}[/bold green]"
-    )
-    uvicorn.run(
-        "api.main:app",
-        host=host,
-        port=port,
-        reload=reload,
-    )
-
-
-@app.command()
-def gradio(
-    host: str = typer.Option("0.0.0.0", "--host", "-h", help="Host to bind"),
-    port: int = typer.Option(7860, "--port", "-p", help="Port to bind"),
-    share: bool = typer.Option(False, "--share/--no-share", help="Create public link"),
-):
-    """Run Gradio UI."""
-    console.print(
-        f"[bold green]Starting Gradio UI at http://{host}:{port}[/bold green]"
-    )
-
-    from ui.gradio_app import demo
-
-    demo.launch(
-        server_name=host,
-        server_port=port,
-        share=share,
-    )
 
 
 @app.command()

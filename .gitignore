@@ -121,7 +121,6 @@ dmypy.json
 lancedb_data/
 .cache/
 logs/
-chroma_db/
 
 # Data files (keep structure)
 data/raw/*.pdf

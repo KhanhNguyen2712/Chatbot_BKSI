@@ -91,3 +91,38 @@ code {
 .stAlert:hover {
     background-color: #2D2F30;
 }
+
+/* ================================
+   Hero Mode - Chat Input Centered
+   ================================ */
+
+/* Override Streamlit's fixed positioning for bottom container in hero mode */
+.hero-mode div[data-testid="stBottomBlockContainer"] {
+    position: fixed !important;
+    top: 75% !important;
+    bottom: auto !important;
+    /* Will be adjusted by JavaScript for sidebar-aware centering */
+    width: 700px !important;
+    max-width: 700px !important;
+    padding: 0 1rem !important;
+    background: transparent !important;
+    z-index: 999 !important;
+    pointer-events: auto !important;
+    transition: left 0.3s ease !important;
+}
+
+/* Inner wrapper in hero mode */
+.hero-mode div[data-testid="stBottomBlockContainer"] > div {
+    background: transparent !important;
+}
+
+/* Ensure the main content area doesn't have extra padding at bottom */
+.hero-mode .stMainBlockContainer {
+    padding-bottom: 0 !important;
+}
+
+/* Style the chat input for hero mode */
+.hero-mode div[data-testid="stChatInput"] {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 12px !important;
+}

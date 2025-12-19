@@ -40,22 +40,6 @@ condense_question_prompt: |
 
   Câu hỏi độc lập:
 
-# Document summary prompt
-document_summary_prompt: |
-  Hãy tóm tắt nội dung chính của tài liệu sau:
-
-  {document}
-
-  Tóm tắt ngắn gọn (tối đa 3 câu):
-
-# Query rewriting prompt for better retrieval
-query_rewrite_prompt: |
-  Hãy viết lại câu hỏi sau để tối ưu cho việc tìm kiếm thông tin:
-
-  Câu hỏi gốc: {query}
-
-  Câu hỏi được viết lại (giữ nguyên ý nghĩa, rõ ràng hơn):
-
 # No context found response
 no_context_response: |
   Xin lỗi, tôi không tìm thấy thông tin liên quan đến câu hỏi của bạn trong 

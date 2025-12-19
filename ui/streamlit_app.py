@@ -99,6 +99,7 @@ def reindex_data(chunk_size: int, chunk_overlap: int):
             if result.returncode == 0:
                 st.success("Xử lý dữ liệu thành công!")
                 time.sleep(1)
+                st.cache_resource.clear()
                 st.rerun()
             else:
                 st.error(f"Lỗi: {result.stderr}")
@@ -146,37 +147,34 @@ def stream_text(text: str) -> Generator[str, None, None]:
         time.sleep(0.015)
 
 
-def display_hero_css():
-    """Inject CSS to center the chat input when history is empty."""
+def load_hero_mode():
+    """Load hero mode CSS class and JavaScript for centered chat input."""
+    # Load hero.js
+    with open("ui/hero.js", "r") as f:
+        hero_js = f.read()
+    
+    # Add hero-mode class to stApp and load JS
     st.markdown(
-        """
-        <style>
-        /* Force the bottom container to move up */
-        div[data-testid="stBottomBlockContainer"] {
-            position: absolute;
-            bottom: 40% !important; /* Force position */
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 800px; /* Match input width */
-            padding-bottom: 0;
-            background: transparent;
-            z-index: 999;
-        }
+        f"""
+        <script>
+        // Add hero-mode class to enable hero styling from style.css
+        document.addEventListener('DOMContentLoaded', function() {{
+            const app = document.querySelector('.stApp');
+            if (app) app.classList.add('hero-mode');
+        }});
+        // Fallback for Streamlit's delayed rendering
+        setTimeout(function() {{
+            const app = document.querySelector('.stApp');
+            if (app) app.classList.add('hero-mode');
+        }}, 50);
         
-        /* Ensure the input container itself is centered inside */
-        .stChatInputContainer {
-             margin: 0 auto;
-        }
-
-        /* Hide the footer spacer */
-        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stChatInputContainer"]) {
-             display: none;
-        }
-        </style>
+        // Hero mode positioning logic
+        {hero_js}
+        </script>
         """,
         unsafe_allow_html=True
     )
+
 
 def display_welcome_screen():
     """Display welcome screen centrally."""
@@ -187,7 +185,7 @@ def display_welcome_screen():
         st.markdown(
             """
             <div style="text-align: center; margin-top: 5vh; margin-bottom: 3rem;">
-                <div class="welcome-text">Trợ lý ảo BKSI</div>
+                <div class="welcome-text">Chào mừng đến với Chatbot BKSI</div>
                 <div class="welcome-subtext">Hôm nay tôi có thể giúp gì cho bạn?</div>
             </div>
             """,
@@ -198,8 +196,8 @@ def display_welcome_screen():
         cols = st.columns(3)
         suggestions = [
             "Đăng ký môn học?",
-            "Quy chế mới nhất?",
-            "Học phí đại học?",
+            "Quy chế - Quy định?",
+            "Đánh giá kết quả học tập?",
         ]
         for i, col in enumerate(cols):
             with col:
@@ -249,7 +247,7 @@ def main():
     # Render Hero if history is empty AND no new input
     if not st.session_state.messages and not user_input:
         with hero_placeholder.container():
-            display_hero_css()
+            load_hero_mode()
             display_welcome_screen()
     else:
         # Chat Mode: Standard history display

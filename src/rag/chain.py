@@ -59,6 +59,7 @@ class RAGChain:
         # Load prompts
         self.system_prompt = get_prompt("system_prompt")
         self.rag_prompt_template = get_prompt("rag_prompt")
+        self.no_context_response = get_prompt("no_context_response")
 
         logger.info(
             f"RAGChain initialized with model: {self.settings.llm_model}, "
@@ -80,6 +81,10 @@ class RAGChain:
             results = self.reranker.rerank(query, results, top_n=top_k)
 
         return results
+
+
+
+
 
     def _format_context(self, results: list[SearchResult]) -> str:
         """Format search results into context string."""
@@ -162,28 +167,35 @@ class RAGChain:
         k = top_k or self.settings.rag_top_k
         should_rerank = use_rerank if use_rerank is not None else self.use_rerank
 
+        search_query = message
+
         logger.info(f"Processing chat message for session {session_id}")
-
-        # Retrieve relevant documents
-        if should_rerank:
-            results = self._retrieve_and_rerank(message, top_k=k)
-        else:
-            results = self.retriever.retrieve(message, top_k=k)
-
-        # Format context
-        context = self._format_context(results)
 
         # Build messages
         messages = [SystemMessage(content=self.system_prompt)]
 
         # Add conversation history if memory enabled
+        chat_history = []
         if self.use_memory and self.memory:
-            history = self.memory.get_langchain_messages(session_id)
-            for role, content in history:
+            chat_history = self.memory.get_langchain_messages(session_id)
+            for role, content in chat_history:
                 if role == "user":
                     messages.append(HumanMessage(content=content))
                 else:
                     messages.append(SystemMessage(content=f"Assistant: {content}"))
+
+
+
+
+        
+        # Retrieve relevant documents
+        if should_rerank:
+            results = self._retrieve_and_rerank(search_query, top_k=k)
+        else:
+            results = self.retriever.retrieve(search_query, top_k=k)
+
+        # Format context
+        context = self._format_context(results)
 
         # Format the RAG prompt
         if context:
@@ -192,7 +204,7 @@ class RAGChain:
             )
         else:
             user_content = (
-                f"{message}\n\n(Không tìm thấy thông tin liên quan trong hệ thống)"
+                f"{message}\n\n{self.no_context_response}"
             )
 
         messages.append(HumanMessage(content=user_content))
