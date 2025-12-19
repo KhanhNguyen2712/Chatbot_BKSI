@@ -59,6 +59,12 @@ def init_components():
         persist_dir=settings.lancedb_persist_dir,
         embedding_model=embedding_model,
     )
+    
+    # Check if vector store has data
+    if vector_store.is_empty:
+        st.error("⚠️ **Chưa có dữ liệu!** Vector store trống. Vui lòng chạy `uv run bksi ingest` để tạo index.")
+        st.info("Nếu đang deploy trên cloud, đảm bảo folder `lancedb_data/` đã được commit lên GitHub.")
+        st.stop()
 
     rag_chain = RAGChain(
         vector_store=vector_store,
