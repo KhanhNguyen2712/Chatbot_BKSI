@@ -1,5 +1,6 @@
 """Configuration management for Chatbot BKSI."""
 
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -8,6 +9,29 @@ import yaml
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
+def get_env_or_secret(key: str, default: str = "") -> str:
+    """Get value from environment variable or Streamlit secrets.
+    
+    Priority:
+    1. Environment variable
+    2. Streamlit secrets (for Streamlit Cloud deployment)
+    3. Default value
+    """
+    # First try environment variable
+    value = os.getenv(key)
+    if value:
+        return value
+    
+    # Try Streamlit secrets (for Streamlit Cloud)
+    try:
+        import streamlit as st
+        if hasattr(st, 'secrets') and key in st.secrets:
+            return str(st.secrets[key])
+    except Exception:
+        pass
+    
+    return default
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables and config files."""
@@ -23,6 +47,12 @@ class Settings(BaseSettings):
     groq_base_url: str = Field(
         default="https://api.groq.com/openai/v1", alias="GROQ_BASE_URL"
     )
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Fallback to Streamlit secrets if env var not set
+        if not self.groq_api_key:
+            self.groq_api_key = get_env_or_secret("GROQ_API_KEY", "")
     
     # LLM Configuration
     llm_provider: str = Field(default="groq", alias="LLM_PROVIDER")
