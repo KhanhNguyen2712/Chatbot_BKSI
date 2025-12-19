@@ -124,7 +124,7 @@ def display_sidebar(settings):
         with st.expander("🛠️ Cấu hình tham số", expanded=True):
             # Runtime Params
             temperature = st.slider("Temperature", 0.0, 1.0, 0.7, 0.1, help="Độ sáng tạo của câu trả lời.")
-            top_k = st.slider("Top-K", 1, 10, settings.rag_top_k, 1, help="Số lượng tài liệu tham khảo.")
+            top_n = st.slider("Top-N", 1, 10, settings.rag_rerank_top_n, 1, help="Số lượng nguồn tham khảo sau reranking.")
             
             st.divider()
             
@@ -137,7 +137,7 @@ def display_sidebar(settings):
                 # Warning: This is a heavy operation
                 reindex_data(chunk_size, chunk_overlap)
 
-        return temperature, top_k
+        return temperature, top_n
 
 
 def stream_text(text: str) -> Generator[str, None, None]:
@@ -232,10 +232,11 @@ def main():
     init_session_state()
     rag_chain, settings = init_components()
 
-    temp, top_k = display_sidebar(settings)
+    temp, top_n = display_sidebar(settings)
     
     # Update runtime settings
     rag_chain.settings.llm_temperature = temp
+    rag_chain.settings.rag_rerank_top_n = top_n
 
     # DYNAMIC LAYOUT LOGIC
     # Create a placeholder for the Hero UI (CSS + Welcome)
@@ -303,7 +304,6 @@ def main():
                         response_obj = rag_chain.chat(
                             message=st.session_state.messages[-1]["content"],
                             session_id=st.session_state.session_id,
-                            top_k=top_k,
                         )
                     
                     full_response = clean_text(response_obj.answer or "Xin lỗi, tôi không có câu trả lời.")

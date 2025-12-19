@@ -9,6 +9,7 @@ from langchain_openai import ChatOpenAI
 from loguru import logger
 
 from src.config import get_prompt, get_settings
+from src.cache import ResponseCache
 from src.models import ChatResponse, SearchResult
 from src.vectorstore import LanceDBVectorStore
 
@@ -44,6 +45,12 @@ class RAGChain:
         )
         self.memory = ConversationMemory() if self.use_memory else None
 
+        # Response Cache
+        self.cache = ResponseCache(
+            cache_dir=self.settings.cache_dir,
+            enabled=self.settings.cache_enabled,
+        )
+
         # Initialize LLM
         api_key = self.settings.groq_api_key
         base_url = self.settings.groq_base_url
@@ -78,7 +85,7 @@ class RAGChain:
 
         # Rerank if enabled
         if self.use_rerank and self.reranker and results:
-            results = self.reranker.rerank(query, results, top_n=top_k)
+            results = self.reranker.rerank(query, results, top_n=self.settings.rag_rerank_top_n)
 
         return results
 
@@ -171,6 +178,13 @@ class RAGChain:
 
         logger.info(f"Processing chat message for session {session_id}")
 
+        # Check cache first (using session_id + message as key)
+        if self.cache.enabled:
+            cached_response = self.cache.get(message, session_id=session_id)
+            if cached_response:
+                logger.info(f"Cache hit for query: {message[:50]}...")
+                return cached_response
+
         # Build messages
         messages = [SystemMessage(content=self.system_prompt)]
 
@@ -225,12 +239,19 @@ class RAGChain:
         # Format sources
         sources = self._format_sources(results)
 
-        return ChatResponse(
+        chat_response = ChatResponse(
             answer=answer,
             sources=sources,
             session_id=session_id,
             cached=False,
         )
+
+        # Cache response (using session_id + message as key)
+        if self.cache.enabled:
+            self.cache.set(message, chat_response, session_id=session_id)
+            logger.debug(f"Cached response for query: {message[:50]}...")
+
+        return chat_response
 
     def search(
         self,
