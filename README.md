@@ -358,7 +358,7 @@ uv sync
 cp .env.example .env
 
 # Chỉnh sửa .env với API key của bạn
-# OPENROUTER_API_KEY=your_key_here
+# GROQ_API_KEY=your_key_here
 ```
 
 ---
@@ -405,7 +405,7 @@ uv run bksi clear-cache
 
 ```bash
 # Bắt buộc
-OPENROUTER_API_KEY=your_openrouter_api_key
+GROQ_API_KEY=your_openrouter_api_key
 
 # Tùy chọn
 LLM_MODEL=openai/gpt-4o-mini
