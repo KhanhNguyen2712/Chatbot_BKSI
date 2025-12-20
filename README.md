@@ -4,6 +4,7 @@
 
 Hệ thống sử dụng kỹ thuật **Retrieval-Augmented Generation (RAG)** để trả lời câu hỏi dựa trên tài liệu nội quy, quy chế và hướng dẫn của trường.
 
+Link demo: https://chatbot-bksi.streamlit.app/
 ---
 
 ## 📋 Mục lục
